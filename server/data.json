@@ -1,0 +1,123 @@
+{
+  "users": [
+    {
+      "id": "u-101",
+      "name": "Srishti",
+      "email": "srishtiankita38@gmail.com",
+      "phone": "+1 (555) 234-5678",
+      "passwordHash": "$2a$10$A1RggSJIGoEyK6x3lPIaWuKXPVWRgkndptHsEWdnzG0bd9nc089Cq",
+      "role": "USER",
+      "deactivationPin": "1234",
+      "stealthCode": "9999"
+    },
+    {
+      "id": "admin-1",
+      "name": "Campus Security Desk",
+      "email": "security@university.edu",
+      "phone": "+1 (555) 911-0000",
+      "passwordHash": "$2a$10$TRP5H1zQ3jxsFaliRXMXleLyacS2N04YJO8j1bZsiXYz0eZ9MIdHy",
+      "role": "ADMIN"
+    },
+    {
+      "id": "u-demo",
+      "name": "Demo User",
+      "email": "srishtikumari.cse25@ritroorkee.com",
+      "phone": "+1 (555) 000-0000",
+      "passwordHash": "$2a$10$oG4hHO5Y.4nQaDiA2ot8Ou5LsYCB4Uo3P6tDctAanwN0.iPB3UBl.",
+      "role": "USER",
+      "deactivationPin": "1234",
+      "stealthCode": "9999",
+      "isVerified": true
+    },
+    {
+      "id": "u-1785218530536",
+      "name": "Test User",
+      "email": "test@university.edu",
+      "phone": "9876543210",
+      "passwordHash": "$2a$10$yuOiacK/RoYuLtE7.19jQOuTSQOVFrzNZbkFOit.YCmHn7SuV8AJm",
+      "role": "USER",
+      "isVerified": true,
+      "deactivationPin": "1234",
+      "stealthCode": "9999"
+    }
+  ],
+  "refreshTokens": [
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtZGVtbyIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJzcmlzaHRpa3VtYXJpLmNzZTI1QHJpdHJvb3JrZWUuY29tIiwiaWF0IjoxNzg1MjE2NDU4LCJleHAiOjE3ODU4MjEyNTh9.cj72tuFZpO3zv5Oyw_rZYxatmWu_iGvbB2bw2-RrBT4",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtZGVtbyIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJzcmlzaHRpa3VtYXJpLmNzZTI1QHJpdHJvb3JrZWUuY29tIiwiaWF0IjoxNzg1MjE2NDcyLCJleHAiOjE3ODU4MjEyNzJ9.AR5siKMrrmLWhaLE2tbsqH3fN5_y475hCVHAKSrnDCI",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtZGVtbyIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJzcmlzaHRpa3VtYXJpLmNzZTI1QHJpdHJvb3JrZWUuY29tIiwiaWF0IjoxNzg1MjE2NDk4LCJleHAiOjE3ODU4MjEyOTh9.GWXQHlyj4oF6JFv1yYSIa_ZnrRvSPg20csLobTmJiu0",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtZGVtbyIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJzcmlzaHRpa3VtYXJpLmNzZTI1QHJpdHJvb3JrZWUuY29tIiwiaWF0IjoxNzg1MjE2NjgxLCJleHAiOjE3ODU4MjE0ODF9.M-w16NUoypw5ZS6Rpc2Ma9u4xUMR1Du8I6AK6LAfzSc",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtZGVtbyIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJzcmlzaHRpa3VtYXJpLmNzZTI1QHJpdHJvb3JrZWUuY29tIiwiaWF0IjoxNzg1MjE3MDgxLCJleHAiOjE3ODU4MjE4ODF9.yGAxvaoHI__W201223R5nYvPCrdw2cLgQ_-QFUDM83w",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUtMTc4NTIxODUzMDUzNiIsInJvbGUiOiJVU0VSIiwiZW1haWwiOiJ0ZXN0QHVuaXZlcnNpdHkuZWR1IiwiaWF0IjoxNzg1MjE4NTMwLCJleHAiOjE3ODU4MjMzMzB9.IDbApmzlycyRtcjW5pdKUltYdqNFF3-bM3VvIRD7Y_k"
+  ],
+  "contacts": [
+    {
+      "id": "c-1",
+      "userId": "u-101",
+      "name": "Rohan Sharma",
+      "phone": "zoKx0pqx48ZHlyjf.jVud1Zn/KKyQgS6+dHJnCi0=.gSehwadyZszvx2M02oTYLA==",
+      "email": "3LjA4tLxGQ+lmBCM.O+7pgwi3FkfDNE2KsUiueI/NHX1uOMum.OSel9+wPkdNVe6WolrC61w==",
+      "relationship": "Brother",
+      "priority": "PRIMARY",
+      "isVerified": true
+    },
+    {
+      "id": "c-2",
+      "userId": "u-101",
+      "name": "Dr. Ananya Roy",
+      "phone": "vNwxFkXA/e42fMTs.Nu3BUQrBK0fAVpeNIwTmfuk=.QNhsGrx9AG7ZDwTx3yF1Ag==",
+      "email": "Ai4f48azuXLMS0xY.KALjVFcZKcDsrditv1fFiyE/67C7jaXGPA==.YagD7ReOofjXPXbDLKq5wA==",
+      "relationship": "Hostel Warden",
+      "priority": "PRIMARY",
+      "isVerified": true
+    },
+    {
+      "id": "c-3",
+      "userId": "u-101",
+      "name": "Priya Verma",
+      "phone": "h5fM7VlP4hJNVcn2.nhrLyb16HjIVnXqmmrmnw3M=.ppIt9dd45HO76Lx9mvJoNA==",
+      "email": "InRzLmOjFPyV6nYJ.r8cbX/WfWiNa/Q2JNHKWs3CBFA==.kj5ikvKMpJKG4A+WiQpL3g==",
+      "relationship": "Friend",
+      "priority": "SECONDARY",
+      "isVerified": true
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alt-8092",
+      "userId": "u-101",
+      "userName": "Srishti",
+      "userPhone": "+1 (555) 234-5678",
+      "status": "ACTIVE",
+      "location": "iFo7N59uG1sT2FKV.8T6RHjIz6euoj1VEmDhg4eoz1cCeZHdOCHNdbmLDm5BO9WlRp/Vmw7qTG5KN8UdD/lD9fnZuqOV46nDaZxLQ8IrP6FtlpMCrVcS2Ia2p2dffGN7ZUdzuTwwnAiHwmdTSwzH6gk3vN5ETjHfBTxuaXC9SduroO0ed5MPj6kaHzKRlL80ePdZE+Rrozg1xb5A2fM4XyM41bNxtjA==.+p8rok2/H33hhQxHIR9GaQ==",
+      "breadcrumbs": "CtgiF+0EzcsAaZE3.gHGP/OjIPAR9XKAPHeUG2PzT/eRvbvwrSq3jyb2THkwqaI40BnzBplR0Y0HQ4/9hucOC1V+a63RF07IWaVr3Oxc4ejyUdLYEAoUBzjK+DCP+Z34tejCd4qbvkh9SSO9sDMZHvGdpMcnHuj7IKs8ESaKd+N8RSQ2ahPsQoC9o4vnM/3U8KJ8lRW2wx2q00CxDSgybeHLtJp4861YHRuOBgfkfhMWg5M23eXbASWa/jezda3PzX168nAlbF25RG6faLUxb8DiHLQB0kN485pMp.VPh7eTWPi5dP2l2IvsmNpA==",
+      "batteryLevel": 78,
+      "ambientAudioRecorded": true,
+      "contactsNotifiedCount": 3,
+      "trackingToken": "trk-srishti-live-8092",
+      "createdAt": "2026-07-26T07:39:49.315Z",
+      "dispatcherNotes": "Alert triggered via silent 3s hold button. GPS location locked."
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1",
+      "alertId": "alt-8092",
+      "contactName": "Rohan Sharma",
+      "channel": "SMS",
+      "recipient": "+1 (555) 987-6543",
+      "message": "EMERGENCY: Srishti needs help! Live GPS Location: http://localhost:5173/track/trk-srishti-live-8092",
+      "status": "DELIVERED",
+      "timestamp": "2026-07-26T07:39:51.316Z"
+    },
+    {
+      "id": "log-2",
+      "alertId": "alt-8092",
+      "contactName": "Dr. Ananya Roy",
+      "channel": "EMAIL",
+      "recipient": "ananya.roy@university.edu",
+      "message": "SILENT SOS ALERT: Srishti has activated Silent SOS. Track live position immediately: http://localhost:5173/track/trk-srishti-live-8092",
+      "status": "DELIVERED",
+      "timestamp": "2026-07-26T07:39:52.316Z"
+    }
+  ]
+}

@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * ============================================================
+ *  THEME SYSTEM — CSS Custom Properties
+ * ============================================================
+ *  We remap every slate shade used in the app to CSS variables.
+ *  Components keep using Tailwind classes like bg-slate-950,
+ *  text-slate-100, border-slate-800 — but their resolved colours
+ *  now change automatically when the html class flips.
+ * ============================================================
+ */
+
+@layer base {
+  /* ---------- DARK THEME (default) ---------- */
+  html.dark {
+    --color-slate-50:  248 250 252;   /* #f8fafc */
+    --color-slate-100: 241 245 249;   /* #f1f5f9 */
+    --color-slate-200: 226 232 240;   /* #e2e8f0 */
+    --color-slate-300: 203 213 225;   /* #cbd5e1 */
+    --color-slate-400: 148 163 184;   /* #94a3b8 */
+    --color-slate-500: 100 116 139;   /* #64748b */
+    --color-slate-600: 71  85 105;    /* #475569 */
+    --color-slate-700: 51  65  85;    /* #334155 */
+    --color-slate-800: 30  41  59;    /* #1e293b */
+    --color-slate-900: 15  23  42;    /* #0f172a */
+    --color-slate-950: 2   6  23;     /* #020617 */
+
+    --glass-bg: rgba(15, 23, 42, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-danger-bg: rgba(220, 38, 38, 0.12);
+    --glass-danger-border: rgba(239, 68, 68, 0.3);
+
+    --scrollbar-track: #090d16;
+    --scrollbar-thumb: #334155;
+    --scrollbar-thumb-hover: #475569;
+
+    --leaflet-bg: #090d16;
+    --card-hover-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+    --border-hover-accent: rgba(239, 68, 68, 0.2);
+  }
+
+  /* ---------- LIGHT THEME ---------- */
+  html.light {
+    --color-slate-50:  2   6  23;     /* inverted: darkest text */
+    --color-slate-100: 15  23  42;    /* dark heading text */
+    --color-slate-200: 30  41  59;    /* medium-dark text */
+    --color-slate-300: 51  65  85;    /* body text */
+    --color-slate-400: 71  85 105;    /* high-contrast subtext */
+    --color-slate-500: 100 116 139;   /* icons / mute text */
+    --color-slate-600: 148 163 184;   /* borders / subtle lines */
+    --color-slate-700: 203 213 225;   /* border accents */
+    --color-slate-800: 226 232 240;   /* light card borders */
+    --color-slate-900: 255 255 255;   /* crisp white cards */
+    --color-slate-950: 241 245 249;   /* soft neutral gray page bg */
+
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(203, 213, 225, 0.8);
+    --glass-danger-bg: rgba(254, 242, 242, 0.95);
+    --glass-danger-border: rgba(239, 68, 68, 0.3);
+
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+
+    --leaflet-bg: #e2e8f0;
+    --card-hover-shadow: 0 14px 28px -5px rgba(0, 0, 0, 0.1), 0 6px 10px -4px rgba(0, 0, 0, 0.05);
+    --border-hover-accent: rgba(220, 38, 38, 0.4);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    scroll-behavior: smooth;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    background-color: rgb(var(--color-slate-950));
+    color: rgb(var(--color-slate-50));
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/*
+ * ============================================================
+ *  OVERRIDE TAILWIND SLATE UTILITIES
+ * ============================================================
+ *  Tailwind generates static colour values for bg-slate-950 etc.
+ *  We override each one to point at our CSS variables instead.
+ *  This is the key mechanism that makes the theme switch work
+ *  without touching any component files.
+ * ============================================================
+ */
+@layer utilities {
+  /* --- Backgrounds --- */
+  .bg-slate-50  { background-color: rgb(var(--color-slate-50))  !important; }
+  .bg-slate-100 { background-color: rgb(var(--color-slate-100)) !important; }
+  .bg-slate-200 { background-color: rgb(var(--color-slate-200)) !important; }
+  .bg-slate-300 { background-color: rgb(var(--color-slate-300)) !important; }
+  .bg-slate-400 { background-color: rgb(var(--color-slate-400)) !important; }
+  .bg-slate-500 { background-color: rgb(var(--color-slate-500)) !important; }
+  .bg-slate-600 { background-color: rgb(var(--color-slate-600)) !important; }
+  .bg-slate-700 { background-color: rgb(var(--color-slate-700)) !important; }
+  .bg-slate-800 { background-color: rgb(var(--color-slate-800)) !important; }
+  .bg-slate-900 { background-color: rgb(var(--color-slate-900)) !important; }
+  .bg-slate-950 { background-color: rgb(var(--color-slate-950)) !important; }
+
+  /* Backgrounds with opacity (common patterns in the codebase) */
+  .bg-slate-800\/30 { background-color: rgb(var(--color-slate-800) / 0.3) !important; }
+  .bg-slate-800\/40 { background-color: rgb(var(--color-slate-800) / 0.4) !important; }
+  .bg-slate-800\/50 { background-color: rgb(var(--color-slate-800) / 0.5) !important; }
+  .bg-slate-800\/60 { background-color: rgb(var(--color-slate-800) / 0.6) !important; }
+  .bg-slate-800\/80 { background-color: rgb(var(--color-slate-800) / 0.8) !important; }
+  .bg-slate-900\/30 { background-color: rgb(var(--color-slate-900) / 0.3) !important; }
+  .bg-slate-900\/40 { background-color: rgb(var(--color-slate-900) / 0.4) !important; }
+  .bg-slate-900\/50 { background-color: rgb(var(--color-slate-900) / 0.5) !important; }
+  .bg-slate-900\/60 { background-color: rgb(var(--color-slate-900) / 0.6) !important; }
+  .bg-slate-900\/70 { background-color: rgb(var(--color-slate-900) / 0.7) !important; }
+  .bg-slate-900\/80 { background-color: rgb(var(--color-slate-900) / 0.8) !important; }
+  .bg-slate-900\/90 { background-color: rgb(var(--color-slate-900) / 0.9) !important; }
+  .bg-slate-950\/50 { background-color: rgb(var(--color-slate-950) / 0.5) !important; }
+  .bg-slate-950\/60 { background-color: rgb(var(--color-slate-950) / 0.6) !important; }
+  .bg-slate-950\/70 { background-color: rgb(var(--color-slate-950) / 0.7) !important; }
+  .bg-slate-950\/80 { background-color: rgb(var(--color-slate-950) / 0.8) !important; }
+  .bg-slate-950\/90 { background-color: rgb(var(--color-slate-950) / 0.9) !important; }
+  .bg-slate-950\/95 { background-color: rgb(var(--color-slate-950) / 0.95) !important; }
+  .bg-slate-700\/30 { background-color: rgb(var(--color-slate-700) / 0.3) !important; }
+  .bg-slate-700\/50 { background-color: rgb(var(--color-slate-700) / 0.5) !important; }
+
+  /* --- Text colours --- */
+  .text-slate-50  { color: rgb(var(--color-slate-50))  !important; }
+  .text-slate-100 { color: rgb(var(--color-slate-100)) !important; }
+  .text-slate-200 { color: rgb(var(--color-slate-200)) !important; }
+  .text-slate-300 { color: rgb(var(--color-slate-300)) !important; }
+  .text-slate-400 { color: rgb(var(--color-slate-400)) !important; }
+  .text-slate-500 { color: rgb(var(--color-slate-500)) !important; }
+  .text-slate-600 { color: rgb(var(--color-slate-600)) !important; }
+  .text-slate-700 { color: rgb(var(--color-slate-700)) !important; }
+  .text-slate-800 { color: rgb(var(--color-slate-800)) !important; }
+  .text-slate-900 { color: rgb(var(--color-slate-900)) !important; }
+  .text-slate-950 { color: rgb(var(--color-slate-950)) !important; }
+
+  /* --- Border colours --- */
+  .border-slate-50  { border-color: rgb(var(--color-slate-50))  !important; }
+  .border-slate-100 { border-color: rgb(var(--color-slate-100)) !important; }
+  .border-slate-200 { border-color: rgb(var(--color-slate-200)) !important; }
+  .border-slate-300 { border-color: rgb(var(--color-slate-300)) !important; }
+  .border-slate-400 { border-color: rgb(var(--color-slate-400)) !important; }
+  .border-slate-500 { border-color: rgb(var(--color-slate-500)) !important; }
+  .border-slate-600 { border-color: rgb(var(--color-slate-600)) !important; }
+  .border-slate-700 { border-color: rgb(var(--color-slate-700)) !important; }
+  .border-slate-800 { border-color: rgb(var(--color-slate-800)) !important; }
+  .border-slate-900 { border-color: rgb(var(--color-slate-900)) !important; }
+  .border-slate-950 { border-color: rgb(var(--color-slate-950)) !important; }
+
+  /* Border with opacity */
+  .border-slate-700\/20 { border-color: rgb(var(--color-slate-700) / 0.2) !important; }
+  .border-slate-700\/30 { border-color: rgb(var(--color-slate-700) / 0.3) !important; }
+  .border-slate-700\/50 { border-color: rgb(var(--color-slate-700) / 0.5) !important; }
+  .border-slate-800\/20 { border-color: rgb(var(--color-slate-800) / 0.2) !important; }
+  .border-slate-800\/30 { border-color: rgb(var(--color-slate-800) / 0.3) !important; }
+  .border-slate-800\/40 { border-color: rgb(var(--color-slate-800) / 0.4) !important; }
+  .border-slate-800\/50 { border-color: rgb(var(--color-slate-800) / 0.5) !important; }
+  .border-slate-800\/60 { border-color: rgb(var(--color-slate-800) / 0.6) !important; }
+  .border-slate-900\/30 { border-color: rgb(var(--color-slate-900) / 0.3) !important; }
+  .border-slate-900\/50 { border-color: rgb(var(--color-slate-900) / 0.5) !important; }
+
+  /* --- Divide colours --- */
+  .divide-slate-800 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(var(--color-slate-800)) !important; }
+  .divide-slate-700 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(var(--color-slate-700)) !important; }
+
+  /* --- Ring colours --- */
+  .ring-slate-700 { --tw-ring-color: rgb(var(--color-slate-700)) !important; }
+  .ring-slate-800 { --tw-ring-color: rgb(var(--color-slate-800)) !important; }
+
+  /* --- Placeholder colours --- */
+  .placeholder-slate-500::placeholder { color: rgb(var(--color-slate-500)) !important; }
+  .placeholder-slate-600::placeholder { color: rgb(var(--color-slate-600)) !important; }
+}
+
+/* ============================================================
+ *  HOVER STATE OVERRIDES
+ *  ============================================================ */
+@layer utilities {
+  .hover\:bg-slate-700:hover { background-color: rgb(var(--color-slate-700)) !important; }
+  .hover\:bg-slate-800:hover { background-color: rgb(var(--color-slate-800)) !important; }
+  .hover\:bg-slate-800\/50:hover { background-color: rgb(var(--color-slate-800) / 0.5) !important; }
+  .hover\:bg-slate-800\/60:hover { background-color: rgb(var(--color-slate-800) / 0.6) !important; }
+  .hover\:bg-slate-800\/80:hover { background-color: rgb(var(--color-slate-800) / 0.8) !important; }
+  .hover\:bg-slate-900:hover { background-color: rgb(var(--color-slate-900)) !important; }
+  .hover\:bg-slate-900\/50:hover { background-color: rgb(var(--color-slate-900) / 0.5) !important; }
+  .hover\:bg-slate-900\/80:hover { background-color: rgb(var(--color-slate-900) / 0.8) !important; }
+  .hover\:bg-slate-950:hover { background-color: rgb(var(--color-slate-950)) !important; }
+
+  .hover\:text-slate-100:hover { color: rgb(var(--color-slate-100)) !important; }
+  .hover\:text-slate-200:hover { color: rgb(var(--color-slate-200)) !important; }
+  .hover\:text-slate-300:hover { color: rgb(var(--color-slate-300)) !important; }
+  .hover\:text-slate-400:hover { color: rgb(var(--color-slate-400)) !important; }
+
+  .hover\:border-slate-600:hover { border-color: rgb(var(--color-slate-600)) !important; }
+  .hover\:border-slate-700:hover { border-color: rgb(var(--color-slate-700)) !important; }
+  .hover\:border-slate-700\/50:hover { border-color: rgb(var(--color-slate-700) / 0.5) !important; }
+}
+
+/* ============================================================
+ *  COMPONENT-LEVEL THEME OVERRIDES
+ *  ============================================================ */
+
+/* Global Premium Card Animations & Spacing Hovers */
+.rounded-3xl, .rounded-2xl, .rounded-xl {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.light .rounded-3xl, html.light .rounded-2xl, html.light .rounded-xl {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.rounded-3xl:hover, .rounded-2xl:hover, .rounded-xl:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+/* Specific glowing highlights for emergency components */
+.border-slate-800:hover {
+  border-color: var(--border-hover-accent) !important;
+}
+
+/* Custom glassmorphism */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-panel-danger {
+  background: var(--glass-danger-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-danger-border);
+}
+
+/* Custom leaflet map adjustments */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background-color: var(--leaflet-bg) !important;
+  border-radius: 0.75rem;
+}
+
+/* Dark mode leaflet tiles filter — only apply in dark */
+html.dark .dark-tiles .leaflet-tile-container img {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+html.light .dark-tiles .leaflet-tile-container img {
+  filter: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ============================================================
+ *  TRANSITION for smooth theme changes
+ *  ============================================================ */
+html.dark *, html.light * {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
