@@ -3,6 +3,8 @@ import { Users, Plus, Trash2, Edit2, Phone, Mail, Send, CheckCircle2, Shield, Al
 import { EmergencyContact } from '../../types';
 import { useI18n } from '../../services/i18n';
 
+import { QrContactScanner } from './QrContactScanner';
+
 interface ContactsManagerProps {
   contacts: EmergencyContact[];
   onAddContact: (contact: Partial<EmergencyContact>) => Promise<void>;
@@ -22,11 +24,12 @@ export const ContactsManager: React.FC<ContactsManagerProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   
   // New States: QR Scanner overlay and Pinned Favorites
   const [showQrReader, setShowQrReader] = useState(false);
-  const [pinnedIds, setPinnedIds] = useState<string[]>(['c-1']); // default Rohan Sharma pinned
-  
+  const [pinnedIds, setPinnedIds] = useState<string[]>(['c-1']);
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -43,20 +46,37 @@ export const ContactsManager: React.FC<ContactsManagerProps> = ({
     );
   };
 
-  const handleScanQr = () => {
+  const handleScanQrClick = () => {
+    setErrorMsg('');
     setShowQrReader(true);
-    setTimeout(() => {
-      // Simulate successful scan of contact payload
-      setFormData({
-        name: 'Bihar Security Helpdesk',
-        phone: '+91 612 221 7824',
-        email: 'safety.bihar@gov.in',
-        relationship: 'Warden/Security',
-        priority: 'PRIMARY'
-      });
-      setShowQrReader(false);
-      setIsAdding(true);
-    }, 2000);
+  };
+
+  const handleContactScanned = async (scanned: Partial<EmergencyContact>) => {
+    if (contacts.length >= 5) {
+      setErrorMsg('BR-Rule-1 Limit Reached: Maximum 5 emergency contacts allowed per user profile.');
+      return;
+    }
+
+    try {
+      setErrorMsg('');
+      const contactToSave = {
+        name: scanned.name || 'Emergency Contact',
+        phone: scanned.phone || '',
+        email: scanned.email || '',
+        relationship: scanned.relationship || 'Family',
+        priority: scanned.priority || 'SECONDARY',
+      };
+
+      // Populate form for user review or immediate save
+      setFormData(contactToSave);
+      await onAddContact(contactToSave);
+
+      // Trigger success toast notification
+      setSuccessToast(`Emergency contact "${contactToSave.name}" imported & saved successfully!`);
+      setTimeout(() => setSuccessToast(null), 5000);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error saving scanned QR contact.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,7 +181,7 @@ export const ContactsManager: React.FC<ContactsManagerProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={handleScanQr}
+            onClick={handleScanQrClick}
             className="flex items-center justify-center space-x-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 text-xs font-bold text-slate-200 transition-all shadow-md"
           >
             <QrCode className="h-4 w-4 text-emerald-400" />
@@ -187,21 +207,20 @@ export const ContactsManager: React.FC<ContactsManagerProps> = ({
         </div>
       </div>
 
-      {/* QR Code Scanner Overlay Simulator */}
-      {showQrReader && (
-        <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-950 p-6 flex flex-col items-center justify-center space-y-4 animate-fade-in">
-          <div className="relative h-44 w-44 rounded-xl border-2 border-emerald-500/50 bg-slate-900 overflow-hidden flex items-center justify-center">
-            {/* Dynamic Scanning Laser bar */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500 animate-bounce shadow-lg shadow-emerald-500" />
-            <Camera className="h-10 w-10 text-slate-700 animate-pulse" />
-          </div>
-          <div className="text-center space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">{t('cameraActive')}</span>
-            <h5 className="text-xs font-bold text-slate-200">{t('qrTitle')}</h5>
-            <p className="text-[9px] text-slate-500">{t('qrSub')}</p>
-          </div>
+      {/* Success Toast Notification */}
+      {successToast && (
+        <div className="mb-6 flex items-center space-x-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-400 text-xs font-bold shadow-xl animate-fadeIn">
+          <CheckCircle2 className="h-5 w-5 shrink-0" />
+          <span>{successToast}</span>
         </div>
       )}
+
+      {/* Real HTML5-QR Scanner Modal */}
+      <QrContactScanner
+        isOpen={showQrReader}
+        onClose={() => setShowQrReader(false)}
+        onContactScanned={handleContactScanned}
+      />
 
       {/* Add / Edit Contact Form Drawer */}
       {isAdding && (

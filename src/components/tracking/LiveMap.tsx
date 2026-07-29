@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { GeoLocation } from '../../types';
 import { useI18n } from '../../services/i18n';
 import { simplifyBreadcrumbs } from '../../utils/geoUtils';
+import { Target } from 'lucide-react';
 
 interface LiveMapProps {
   location: GeoLocation;
@@ -11,6 +12,7 @@ interface LiveMapProps {
   isEmergency?: boolean;
   height?: string;
   simplificationTolerance?: number;
+  shareLocationEnabled?: boolean;
 }
 
 export const LiveMap: React.FC<LiveMapProps> = ({
@@ -19,7 +21,8 @@ export const LiveMap: React.FC<LiveMapProps> = ({
   userName = 'User',
   isEmergency = true,
   height = '450px',
-  simplificationTolerance = 0.00005
+  simplificationTolerance = 0.00005,
+  shareLocationEnabled = true
 }) => {
   const { t } = useI18n();
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -383,6 +386,12 @@ export const LiveMap: React.FC<LiveMapProps> = ({
     if (mapInstanceRef.current) mapInstanceRef.current.zoomOut();
   };
 
+  const handleRecenter = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([location.lat, location.lng], 16, { animate: true });
+    }
+  };
+
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
       
@@ -391,12 +400,19 @@ export const LiveMap: React.FC<LiveMapProps> = ({
 
       {/* Top Left: Live Stream Badge */}
       <div className="absolute top-3 left-3 z-20 flex items-center space-x-2 rounded-lg bg-slate-950/80 px-3 py-1.5 text-[11px] font-semibold text-slate-200 border border-slate-800 backdrop-blur-md">
-        <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-        <span>{t('liveGpsStream')}</span>
+        <span className={`h-2 w-2 rounded-full ${shareLocationEnabled ? 'bg-red-500 animate-ping' : 'bg-amber-500'}`} />
+        <span>{shareLocationEnabled ? t('liveGpsStream') : '⚠️ Live Location Sharing Paused'}</span>
       </div>
 
-      {/* Top Right: Custom Zoom Controls */}
+      {/* Top Right: Custom Zoom & Recenter Controls */}
       <div className="absolute top-3 right-3 z-20 flex flex-col space-y-1">
+        <button
+          onClick={handleRecenter}
+          title="Recenter Map on My Location"
+          className="flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-slate-950/90 border border-slate-850 hover:bg-slate-900 text-emerald-400 font-extrabold text-xs shadow-md transition-all active:scale-90"
+        >
+          <Target className="h-4 w-4" />
+        </button>
         <button
           onClick={handleZoomIn}
           className="flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-slate-950/90 border border-slate-850 hover:bg-slate-900 text-white font-extrabold text-xs shadow-md transition-all active:scale-90"

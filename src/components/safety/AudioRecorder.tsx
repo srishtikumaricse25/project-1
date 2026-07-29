@@ -7,12 +7,14 @@ interface AudioRecorderProps {
   isRecording: boolean;
   activeAlert: EmergencyAlert | null;
   onUpdateNotes?: (notes: string) => Promise<void>;
+  dataEncryptionEnabled?: boolean;
 }
 
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   isRecording,
   activeAlert,
-  onUpdateNotes
+  onUpdateNotes,
+  dataEncryptionEnabled = true
 }) => {
   const { t } = useI18n();
   const [spectrum, setSpectrum] = useState<number[]>([20, 30, 20, 15, 20, 25, 20, 15, 20, 15]);
@@ -229,14 +231,18 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         {/* Cryptography / Storage Status */}
         <div className="rounded-xl bg-slate-950 p-2.5 border border-slate-800/60 flex items-center space-x-2.5">
           <span className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-            isRecording ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-slate-500 bg-slate-900 border-slate-850'
+            dataEncryptionEnabled
+              ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+              : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
           }`}>
             <Lock className="h-4 w-4" />
           </span>
           <div>
             <div className="text-[9px] text-slate-500 font-bold uppercase">{t('encryptedStorageLabel')}</div>
-            <div className="text-[10px] font-semibold text-slate-200 mt-0.5">
-              {isRecording ? `AES-256 (${encryptedSizeKB} KB)` : 'AES-256 GCM'}
+            <div className={`text-[10px] font-semibold mt-0.5 ${dataEncryptionEnabled ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {dataEncryptionEnabled
+                ? (isRecording ? `AES-256 (${encryptedSizeKB} KB)` : 'AES-256 GCM')
+                : 'Unencrypted Payload'}
             </div>
           </div>
         </div>

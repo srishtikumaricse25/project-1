@@ -10,16 +10,17 @@ interface UserProfileModalProps {
   onClose: () => void;
   contacts: EmergencyContact[];
   onOpenDevices?: () => void;
+  user?: { name: string; email: string; phone: string };
 }
 
-export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, contacts, onOpenDevices }) => {
+export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, contacts, onOpenDevices, user }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'MEDICAL' | 'CONTACTS'>('OVERVIEW');
   const [profile, setProfile] = useState({
-    name: 'Srishti',
-    email: 'srishtiankita38@gmail.com',
-    phone: '+91 98765 43210',
+    name: user?.name || 'Srishti',
+    email: user?.email || 'srishtiankita38@gmail.com',
+    phone: user?.phone || '+91 98765 43210',
     bloodGroup: 'O-Negative',
     age: '21',
     gender: 'Female',

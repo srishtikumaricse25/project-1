@@ -4,6 +4,7 @@ import { useI18n } from '../../services/i18n';
 
 interface SafetyCheckInProps {
   onTriggerSOS: (reason: string) => void;
+  checkInEnabled?: boolean;
 }
 
 interface RouteOption {
@@ -11,7 +12,7 @@ interface RouteOption {
   duration: number;
 }
 
-export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS }) => {
+export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS, checkInEnabled = true }) => {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'TIMER' | 'JOURNEY'>('TIMER');
 
@@ -233,6 +234,18 @@ export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS }) =>
   return (
     <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-xl space-y-4">
       
+      {!checkInEnabled && (
+        <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 text-center">
+          <div className="flex items-center justify-center space-x-1.5 text-xs font-bold text-amber-400">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>Check-in Timer Disabled in Settings</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            Enable "Check-in Reminders" in Settings to activate safety timers.
+          </p>
+        </div>
+      )}
+
       {/* Mode Tabs */}
       <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
         <button
@@ -242,7 +255,7 @@ export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS }) =>
               ? 'bg-slate-800 text-white border border-slate-700' 
               : 'text-slate-400 hover:text-white'
           }`}
-          disabled={timerEnabled || journeyEnabled}
+          disabled={!checkInEnabled || timerEnabled || journeyEnabled}
         >
           {t('checkInTab')}
         </button>
@@ -253,7 +266,7 @@ export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS }) =>
               ? 'bg-slate-800 text-white border border-slate-700' 
               : 'text-slate-400 hover:text-white'
           }`}
-          disabled={timerEnabled || journeyEnabled}
+          disabled={!checkInEnabled || timerEnabled || journeyEnabled}
         >
           {t('journeyTab')}
         </button>
@@ -348,7 +361,12 @@ export const SafetyCheckIn: React.FC<SafetyCheckInProps> = ({ onTriggerSOS }) =>
 
               <button
                 onClick={handleStartTimer}
-                className="w-full flex items-center justify-center space-x-2 rounded-xl bg-slate-800 border border-slate-700 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:text-white transition-all"
+                disabled={!checkInEnabled}
+                className={`w-full flex items-center justify-center space-x-2 rounded-xl py-2.5 text-xs font-bold transition-all ${
+                  checkInEnabled
+                    ? 'bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-white'
+                    : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                }`}
               >
                 <Timer className="h-4 w-4 text-amber-400" />
                 <span>{t('startMinutesCheckIn').replace('{minutes}', String(timerMinutes))}</span>

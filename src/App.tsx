@@ -26,8 +26,12 @@ import { EmergencyAlert, EmergencyContact, GeoLocation, NotificationLog, User } 
 import { api } from './services/api';
 import { socketService } from './services/socket';
 import { GeolocationService, DEFAULT_LOCATION } from './services/geolocation';
+import { AppSettings, loadSavedSettings } from './services/settings';
 
 export const App: React.FC = () => {
+  // Settings State (restored from localStorage)
+  const [settings, setSettings] = useState<AppSettings>(loadSavedSettings);
+
   // Navigation State
   const [activeView, setActiveView] = useState<'USER' | 'ADMIN' | 'PUBLIC'>('USER');
   const [trackingToken, setTrackingToken] = useState<string | null>(null);
@@ -49,7 +53,8 @@ export const App: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState<GeoLocation>(DEFAULT_LOCATION);
   const [breadcrumbs, setBreadcrumbs] = useState<GeoLocation[]>([DEFAULT_LOCATION]);
   const [batteryLevel, setBatteryLevel] = useState<number>(84);
-  const [gpsMode, setGpsMode] = useState<'REAL' | 'WALK' | 'DRIVE' | 'STATIONARY'>('WALK');
+  const [gpsMode, setGpsMode] = useState<'REAL' | 'WALK' | 'DRIVE' | 'STATIONARY'>('REAL');
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // Emergency Alert State
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
@@ -129,33 +134,82 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Continuous GPS Location updates & Socket streaming interval
+  // Continuous GPS Location updates & Socket streaming handler
   useEffect(() => {
-    const updateLocationStep = async () => {
-      let nextLoc: GeoLocation;
+    let intervalId: NodeJS.Timeout | null = null;
 
-      if (gpsMode === 'REAL') {
-        nextLoc = await GeolocationService.getCurrentLocation();
-      } else {
-        nextLoc = GeolocationService.generateSimulatedMovement(currentLocation, gpsMode);
+    if (!settings.gpsPermission) {
+      setLocationError('GPS positioning is currently disabled in Settings.');
+      GeolocationService.stopWatch();
+      return;
+    }
+
+    if (gpsMode === 'REAL') {
+      if (!settings.backgroundTracking) {
+        // Simple one-time location check if background tracking is OFF
+        GeolocationService.getCurrentLocation().then(initialLoc => {
+          setCurrentLocation(initialLoc);
+          setBreadcrumbs(prev => [...prev.slice(-30), initialLoc]);
+        });
+        return;
       }
 
-      setCurrentLocation(nextLoc);
-      setBreadcrumbs(prev => [...prev.slice(-30), nextLoc]);
+      // 1. Fetch current single fix immediately
+      GeolocationService.getCurrentLocation().then(initialLoc => {
+        setCurrentLocation(initialLoc);
+        setBreadcrumbs(prev => [...prev.slice(-30), initialLoc]);
+      });
 
-      // If emergency alert is active, stream location to backend & WebSockets
-      if (activeAlert) {
-        const bat = await GeolocationService.getBatteryLevel();
-        setBatteryLevel(bat);
-        socketService.streamLocation(activeAlert.id, nextLoc, bat);
-        // Also call REST API sync
-        api.updateLocation(activeAlert.id, nextLoc, bat);
-      }
-    };
+      // 2. Subscribe to reactive hardware updates using watchPosition
+      const watchId = GeolocationService.watchPosition(
+        async (nextLoc) => {
+          setLocationError(null);
+          setCurrentLocation(nextLoc);
+          setBreadcrumbs(prev => [...prev.slice(-30), nextLoc]);
 
-    const interval = setInterval(updateLocationStep, activeAlert ? 2500 : 4000);
-    return () => clearInterval(interval);
-  }, [gpsMode, currentLocation, activeAlert]);
+          if (activeAlert && settings.shareLocation) {
+            const bat = await GeolocationService.getBatteryLevel();
+            setBatteryLevel(bat);
+            socketService.streamLocation(activeAlert.id, nextLoc, bat);
+            api.updateLocation(activeAlert.id, nextLoc, bat);
+          }
+        },
+        (err) => {
+          if (err.code === err.PERMISSION_DENIED) {
+            setLocationError('Geolocation permission denied by browser. Please enable location permissions in your browser settings.');
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            setLocationError('GPS position unavailable. Check device GPS hardware or Wi-Fi location settings.');
+          } else if (err.code === err.TIMEOUT) {
+            setLocationError('GPS position request timed out.');
+          }
+        }
+      );
+
+      return () => {
+        GeolocationService.stopWatch();
+      };
+    } else {
+      setLocationError(null);
+      // Simulated movement loop for WALK, DRIVE, STATIONARY modes
+      const updateSimulatedStep = async () => {
+        const nextLoc = GeolocationService.generateSimulatedMovement(currentLocation, gpsMode);
+        setCurrentLocation(nextLoc);
+        setBreadcrumbs(prev => [...prev.slice(-30), nextLoc]);
+
+        if (activeAlert && settings.shareLocation) {
+          const bat = await GeolocationService.getBatteryLevel();
+          setBatteryLevel(bat);
+          socketService.streamLocation(activeAlert.id, nextLoc, bat);
+          api.updateLocation(activeAlert.id, nextLoc, bat);
+        }
+      };
+
+      intervalId = setInterval(updateSimulatedStep, activeAlert ? 2500 : 4000);
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }
+  }, [gpsMode, activeAlert, settings.gpsPermission, settings.highAccuracyGps, settings.backgroundTracking, settings.shareLocation]);
 
   // Trigger Silent SOS Action
   const handleTriggerSOS = async (triggerMethod: string) => {
@@ -308,7 +362,7 @@ export const App: React.FC = () => {
 
       {/* Navbar */}
       <Navbar
-        user={currentUser}
+        user={settings.anonymousMode ? { ...currentUser, name: 'Anonymous User', email: 'a***@***.com', phone: '+1 (***) ***-****' } : currentUser}
         activeView={activeView}
         setActiveView={setActiveView}
         isStealthMode={isStealthMode}
@@ -326,6 +380,8 @@ export const App: React.FC = () => {
           localStorage.removeItem('sos-session-token');
           setIsLoggedIn(false);
         }}
+        settings={settings}
+        onSettingsChange={setSettings}
       />
 
       {/* Main Content Body */}
@@ -335,7 +391,14 @@ export const App: React.FC = () => {
         ) : (
           <div className="mx-auto max-w-7xl p-4 sm:p-6 space-y-8">
             
-            <AlertLifecycle activeAlert={activeAlert} gpsConnected={true} />
+            {locationError && (
+              <div className="flex items-center space-x-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 text-amber-400 text-xs font-semibold shadow-lg">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{locationError}</span>
+              </div>
+            )}
+
+            <AlertLifecycle activeAlert={activeAlert} gpsConnected={settings.gpsPermission} />
 
             {/* Top Row: SOS Button Control & GPS Simulator */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
@@ -346,10 +409,11 @@ export const App: React.FC = () => {
                   onTriggerAlert={(method) => handleTriggerSOS(method)}
                   activeAlert={activeAlert}
                   onOpenDeactivate={() => setIsPinModalOpen(true)}
+                  sosAlertsEnabled={settings.sosAlerts}
                 />
 
                 <SafetyReadiness
-                  gpsConnected={true}
+                  gpsConnected={settings.gpsPermission}
                   contactsCount={contacts.length}
                   checkInActive={false}
                   batteryLevel={batteryLevel}
@@ -366,9 +430,10 @@ export const App: React.FC = () => {
                 <LiveMap
                   location={currentLocation}
                   breadcrumbs={breadcrumbs}
-                  userName={currentUser.name}
+                  userName={settings.anonymousMode ? 'Anonymous User' : currentUser.name}
                   isEmergency={!!activeAlert}
                   height="370px"
+                  shareLocationEnabled={settings.shareLocation}
                 />
 
                 <EmergencyTimeline activeAlert={activeAlert} />
@@ -404,7 +469,10 @@ export const App: React.FC = () => {
               {/* Safety Timers, Audio Recorder & Hotlines (5 cols) */}
               <div className="lg:col-span-5 space-y-8 h-full flex flex-col justify-between">
                 
-                <SafetyCheckIn onTriggerSOS={(reason) => handleTriggerSOS(reason)} />
+                <SafetyCheckIn
+                  onTriggerSOS={(reason) => handleTriggerSOS(reason)}
+                  checkInEnabled={settings.checkInReminders}
+                />
 
                 <AudioRecorder
                   isRecording={!!activeAlert}
@@ -415,6 +483,7 @@ export const App: React.FC = () => {
                       setActiveAlert(updated);
                     }
                   }}
+                  dataEncryptionEnabled={settings.dataEncryption}
                 />
 
                 <EmergencyHotlines />
@@ -492,6 +561,7 @@ export const App: React.FC = () => {
       <UserProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+        user={settings.anonymousMode ? { ...currentUser, name: 'Anonymous User', email: 'a***@***.com', phone: '+1 (***) ***-****' } : currentUser}
         contacts={contacts}
         onOpenDevices={() => {
           setIsProfileModalOpen(false);

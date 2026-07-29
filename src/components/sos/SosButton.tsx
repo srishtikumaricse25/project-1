@@ -7,17 +7,20 @@ interface SosButtonProps {
   onTriggerAlert: (triggerMethod: string) => void;
   activeAlert: EmergencyAlert | null;
   onOpenDeactivate: () => void;
+  sosAlertsEnabled?: boolean;
 }
 
 export const SosButton: React.FC<SosButtonProps> = ({
   onTriggerAlert,
   activeAlert,
-  onOpenDeactivate
+  onOpenDeactivate,
+  sosAlertsEnabled = true
 }) => {
   const { t } = useI18n();
   const [pressMode, setPressMode] = useState<'HOLD' | 'INSTANT'>('HOLD');
   const [isPressing, setIsPressing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [disabledWarning, setDisabledWarning] = useState(false);
   const timerRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
 
@@ -76,6 +79,11 @@ export const SosButton: React.FC<SosButtonProps> = ({
   };
 
   const handleMouseDown = () => {
+    if (!sosAlertsEnabled) {
+      setDisabledWarning(true);
+      setTimeout(() => setDisabledWarning(false), 4000);
+      return;
+    }
     if (activeAlert || isCountingDown) return;
 
     if (pressMode === 'INSTANT') {
@@ -142,6 +150,18 @@ export const SosButton: React.FC<SosButtonProps> = ({
           >
             {t('instantTap')}
           </button>
+        </div>
+      )}
+
+      {(!sosAlertsEnabled || disabledWarning) && (
+        <div className="mb-4 w-full rounded-2xl bg-amber-500/15 border border-amber-500/30 p-3 text-center animate-fadeIn">
+          <div className="flex items-center justify-center space-x-1.5 text-xs font-bold text-amber-400">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>Emergency SOS Disabled in Settings</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            Re-enable "Emergency SOS Active" in Settings to send emergency alerts.
+          </p>
         </div>
       )}
 

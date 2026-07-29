@@ -12,45 +12,114 @@ export const DEFAULT_LOCATION: GeoLocation = {
 };
 
 export class GeolocationService {
+  private static watchId: number | null = null;
+
+  static async checkPermissionState(): Promise<PermissionState | 'unsupported'> {
+    if ('permissions' in navigator && navigator.permissions.query) {
+      try {
+        const status = await navigator.permissions.query({ name: 'geolocation' });
+        return status.state;
+      } catch (e) {
+        return 'unsupported';
+      }
+    }
+    return 'unsupported';
+  }
+
   static async getCurrentLocation(): Promise<GeoLocation> {
     return new Promise((resolve) => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const loc: GeoLocation = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-              speed: pos.coords.speed,
-              heading: pos.coords.heading,
-              altitude: pos.coords.altitude,
-              timestamp: pos.timestamp,
-              address: `${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`
-            };
-
-            // Attempt reverse geocode using OpenStreetMap Nominatim
-            try {
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${loc.lat}&lon=${loc.lng}&format=json`);
-              const data = await res.json();
-              if (data && data.display_name) {
-                loc.address = data.display_name.split(',').slice(0, 3).join(',');
-              }
-            } catch (e) {
-              // Ignore network errors on reverse geocode
-            }
-
-            resolve(loc);
-          },
-          (err) => {
-            console.warn('Browser Geolocation error, returning default simulator location:', err.message);
-            resolve({ ...DEFAULT_LOCATION, timestamp: Date.now() });
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      } else {
-        resolve({ ...DEFAULT_LOCATION, timestamp: Date.now() });
+      if (!('geolocation' in navigator)) {
+        console.warn('Geolocation API not supported by browser.');
+        return resolve({ ...DEFAULT_LOCATION, timestamp: Date.now() });
       }
+
+      // Try High Accuracy first, fallback to standard accuracy if timeout/error occurs
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const loc = await GeolocationService.processPosition(pos);
+          resolve(loc);
+        },
+        (err) => {
+          console.warn('High accuracy GPS error:', err.message, 'Code:', err.code);
+          // Fallback retry with enableHighAccuracy: false
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              const loc = await GeolocationService.processPosition(pos);
+              resolve(loc);
+            },
+            (fallbackErr) => {
+              console.warn('Fallback GPS positioning error:', fallbackErr.message);
+              resolve({ ...DEFAULT_LOCATION, timestamp: Date.now() });
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 10000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
     });
+  }
+
+  static watchPosition(
+    onSuccess: (location: GeoLocation) => void,
+    onError?: (error: GeolocationPositionError) => void
+  ): number | null {
+    if (!('geolocation' in navigator)) {
+      console.warn('Geolocation API not supported by browser.');
+      return null;
+    }
+
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+    }
+
+    this.watchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const loc = await GeolocationService.processPosition(pos);
+        onSuccess(loc);
+      },
+      (err) => {
+        console.warn('watchPosition error:', err.message, 'Code:', err.code);
+        if (onError) onError(err);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+    );
+
+    return this.watchId;
+  }
+
+  static stopWatch(): void {
+    if (this.watchId !== null && 'geolocation' in navigator) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+  }
+
+  private static async processPosition(pos: GeolocationPosition): Promise<GeoLocation> {
+    const loc: GeoLocation = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      accuracy: pos.coords.accuracy,
+      speed: pos.coords.speed || 0,
+      heading: pos.coords.heading || 0,
+      altitude: pos.coords.altitude || 0,
+      timestamp: pos.timestamp,
+      address: `${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`
+    };
+
+    // Attempt reverse geocode using OpenStreetMap Nominatim
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${loc.lat}&lon=${loc.lng}&format=json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.display_name) {
+          loc.address = data.display_name.split(',').slice(0, 3).join(',');
+        }
+      }
+    } catch (e) {
+      // Ignore network errors on reverse geocode
+    }
+
+    return loc;
   }
 
   static async getBatteryLevel(): Promise<number> {
@@ -62,7 +131,7 @@ export class GeolocationService {
     } catch (e) {
       // Ignore
     }
-    return 84; // Default realistic battery level
+    return 84;
   }
 
   // Simulated GPS Walker/Driver movement generator for desktop testing
@@ -75,8 +144,8 @@ export class GeolocationService {
       };
     }
 
-    const step = mode === 'WALK' ? 0.00015 : 0.0006; // Approximate step size in lat/lng degrees
-    const randomAngle = (Math.random() - 0.5) * 0.4; // slight curve
+    const step = mode === 'WALK' ? 0.00015 : 0.0006;
+    const randomAngle = (Math.random() - 0.5) * 0.4;
     const headingRad = ((current.heading || 90) * Math.PI) / 180 + randomAngle;
 
     const newLat = current.lat + step * Math.cos(headingRad);

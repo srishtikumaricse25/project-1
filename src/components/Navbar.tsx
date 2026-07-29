@@ -3,6 +3,8 @@ import { ShieldAlert, Radio, EyeOff, Users, LayoutDashboard, Bell, Clock, LogOut
 import { User } from '../types';
 import { useI18n } from '../services/i18n';
 
+import { AppSettings, loadSavedSettings, saveSetting } from '../services/settings';
+
 interface NavbarProps {
   user: User;
   activeView: 'USER' | 'ADMIN' | 'PUBLIC';
@@ -15,6 +17,8 @@ interface NavbarProps {
   onOpenHistory: () => void;
   onOpenProfile: () => void;
   onLogout: () => void;
+  settings?: AppSettings;
+  onSettingsChange?: (newSettings: AppSettings) => void;
 }
 
 interface Notification {
@@ -153,7 +157,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenContacts,
   onOpenHistory,
   onOpenProfile,
-  onLogout
+  onLogout,
+  settings: parentSettings,
+  onSettingsChange
 }) => {
   const { language, setLanguage, t } = useI18n();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -164,25 +170,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  // Settings state
-  const [settings, setSettings] = useState(() => {
-    const savedTheme = localStorage.getItem('sos-theme-mode') as 'dark' | 'light' | 'auto' || 'dark';
-    return {
-      pushNotifications: true,
-      sosAlerts: true,
-      checkInReminders: true,
-      soundAlerts: false,
-      gpsPermission: true,
-      highAccuracyGps: true,
-      backgroundTracking: false,
-      themeMode: savedTheme,
-      language: 'English' as 'English' | 'Hindi',
-      shareLocation: true,
-      anonymousMode: false,
-      dataEncryption: true,
-      biometricsEnabled: true,
-    };
-  });
+  // Settings state (synced with parent or persistent local storage)
+  const [internalSettings, setInternalSettings] = useState<AppSettings>(loadSavedSettings);
+  const settings = parentSettings || internalSettings;
 
   const [pinChangeMode, setPinChangeMode] = useState<'NONE' | 'STEALTH' | 'SAFETY'>('NONE');
   const [pinInputValue, setPinInputValue] = useState('');
@@ -225,8 +215,30 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [settings.themeMode]);
 
-  const toggleSetting = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleSetting = (key: keyof AppSettings) => {
+    const newValue = !settings[key];
+    saveSetting(key, newValue);
+
+    if (key === 'pushNotifications' && newValue) {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+    }
+
+    const updated = { ...settings, [key]: newValue };
+    setInternalSettings(updated);
+    if (onSettingsChange) {
+      onSettingsChange(updated);
+    }
+  };
+
+  const updateSettingValue = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    saveSetting(key, value);
+    const updated = { ...settings, [key]: value };
+    setInternalSettings(updated);
+    if (onSettingsChange) {
+      onSettingsChange(updated);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -614,7 +626,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {(['dark', 'light', 'auto'] as const).map(mode => (
                         <button
                           key={mode}
-                          onClick={() => setSettings(p => ({ ...p, themeMode: mode }))}
+                          onClick={() => updateSettingValue('themeMode', mode)}
                           className={`flex-1 py-1.5 rounded-lg transition-all capitalize ${
                             settings.themeMode === mode
                               ? 'bg-slate-800 text-white border border-slate-700'
@@ -639,7 +651,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           key={lang}
                           onClick={() => {
                             setLanguage(lang);
-                            setSettings(p => ({ ...p, language: lang }));
+                            updateSettingValue('language', lang);
                           }}
                           className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                             language === lang
@@ -661,7 +673,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <span className="text-xs text-slate-300 font-medium">{t('biometrics')}</span>
                       </div>
                       <button
-                        onClick={() => setSettings(prev => ({ ...prev, biometricsEnabled: !prev.biometricsEnabled }))}
+                        onClick={() => toggleSetting('biometricsEnabled')}
                         className={`relative w-9 h-5 rounded-full transition-all duration-200 ${settings.biometricsEnabled ? 'bg-emerald-500' : 'bg-slate-700'}`}
                       >
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all duration-200 ${settings.biometricsEnabled ? 'left-[18px]' : 'left-0.5'}`} />
