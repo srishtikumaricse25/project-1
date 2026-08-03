@@ -109,10 +109,11 @@ router.post('/register', authRateLimiter, validate(registerSchema), (req, res) =
       token: accessToken
     });
   } catch (err) {
+    console.error('[Auth Exception Stack]:', err);
     logger.error(`[Auth Register Error]: ${err.message}`, { error: err.stack });
     return res.status(500).json({
       success: false,
-      error: 'Registration failed due to an internal server error. Please try again.',
+      error: err.message || 'Registration failed due to an internal server error. Please try again.',
       timestamp: new Date().toISOString()
     });
   }
@@ -168,10 +169,11 @@ router.post('/login', authRateLimiter, validate(loginSchema), (req, res) => {
       token: accessToken
     });
   } catch (err) {
+    console.error('[Auth Login Exception Stack]:', err);
     logger.error(`[Auth Login Error]: ${err.message}`, { error: err.stack });
     return res.status(500).json({
       success: false,
-      error: 'Login failed due to an internal server error. Please try again.',
+      error: err.message || 'Login failed due to an internal server error. Please try again.',
       timestamp: new Date().toISOString()
     });
   }

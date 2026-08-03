@@ -30,10 +30,18 @@ process.on('uncaughtException', (error) => {
   }
 });
 
+const noopMiddleware = (req, res, next) => next();
+const dummyErrorHandler = (err, req, res, next) => next(err);
+
 export default {
   captureException: (err) => {
     if (isSentryEnabled) {
       try { Sentry.captureException(err); } catch {}
     }
+  },
+  Handlers: {
+    requestHandler: () => (isSentryEnabled && Sentry.Handlers?.requestHandler ? Sentry.Handlers.requestHandler() : noopMiddleware),
+    tracingHandler: () => (isSentryEnabled && Sentry.Handlers?.tracingHandler ? Sentry.Handlers.tracingHandler() : noopMiddleware),
+    errorHandler: () => (isSentryEnabled && Sentry.Handlers?.errorHandler ? Sentry.Handlers.errorHandler() : dummyErrorHandler)
   }
 };

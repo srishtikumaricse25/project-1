@@ -247,6 +247,20 @@ app.use('/api/*', (req, res) => {
   });
 });
 
+// Global Express error logging & fallback handler
+app.use((err, req, res, next) => {
+  console.error('[Global Express Exception]:', err.message);
+  console.error(err.stack);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Internal Server Error',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
