@@ -300,7 +300,11 @@ class DatabaseEngine {
   }
 
   ensureSeedUsers() {
+    if (!this.memoryData) this.memoryData = {};
     if (!this.memoryData.users) this.memoryData.users = [];
+    if (!this.data) this.data = this.memoryData;
+    if (!this.data.users) this.data.users = this.memoryData.users;
+
     const demoEmail = 'srishtikumari.cse25@ritroorkee.com';
     let demoUser = this.memoryData.users.find(u => u.email && u.email.toLowerCase().trim() === demoEmail);
     if (!demoUser) {
@@ -325,7 +329,7 @@ class DatabaseEngine {
       }
     }
 
-    if (mongoose.connection.readyState === 1) {
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
       User.updateOne({ email: demoEmail }, demoUser, { upsert: true }).catch(() => {});
     }
   }
@@ -336,15 +340,17 @@ class DatabaseEngine {
 
   // Organizations
   getOrganizations() {
-    return this.memoryData.organizations;
+    return this.memoryData?.organizations || [];
   }
 
   getOrganizationById(id) {
-    return this.memoryData.organizations.find(o => o.id === id);
+    return (this.memoryData?.organizations || []).find(o => o.id === id);
   }
 
   // Users
   getUsers() {
+    if (!this.memoryData) this.memoryData = {};
+    if (!this.memoryData.users) this.memoryData.users = [];
     return this.memoryData.users;
   }
 

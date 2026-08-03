@@ -7,9 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LOGS_DIR = path.join(__dirname, '../../logs');
 
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
-}
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 // Custom format for JSON logging with ISO timestamps
 const customFormat = winston.format.combine(
@@ -19,44 +17,49 @@ const customFormat = winston.format.combine(
   winston.format.json()
 );
 
-// Create Winston Logger instance
+const transports = [
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+      winston.format.printf(({ timestamp, level, message, ...meta }) => {
+        const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+        return `[${timestamp}] [${level.toUpperCase()}]: ${message} ${metaStr}`;
+      })
+    )
+  })
+];
+
+// Add file transports only if NOT in serverless environment and directory writable
+if (!isServerless) {
+  try {
+    if (!fs.existsSync(LOGS_DIR)) {
+      fs.mkdirSync(LOGS_DIR, { recursive: true });
+    }
+    transports.push(
+      new winston.transports.File({
+        filename: path.join(LOGS_DIR, 'error.log'),
+        level: 'error',
+        maxsize: 10 * 1024 * 1024,
+        maxFiles: 5
+      }),
+      new winston.transports.File({
+        filename: path.join(LOGS_DIR, 'combined.log'),
+        maxsize: 10 * 1024 * 1024,
+        maxFiles: 5
+      })
+    );
+  } catch (err) {
+    console.warn('[Logger] File logging disabled (read-only filesystem):', err.message);
+  }
+}
+
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: customFormat,
   defaultMeta: { service: 'silent-sos-backend' },
-  transports: [
-    // 1. Error Logs File
-    new winston.transports.File({
-      filename: path.join(LOGS_DIR, 'error.log'),
-      level: 'error',
-      maxsize: 10 * 1024 * 1024, // 10MB rotation
-      maxFiles: 5
-    }),
-    // 2. Combined Logs File
-    new winston.transports.File({
-      filename: path.join(LOGS_DIR, 'combined.log'),
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 5
-    })
-  ]
+  transports
 });
 
-// Console logging format for development
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.printf(({ timestamp, level, message, service, ...meta }) => {
-          const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-          return `[${timestamp}] [${level}]: ${message} ${metaStr}`;
-        })
-      )
-    })
-  );
-}
-
-// Helper methods for categorized structured logging
 export const logAuth = (action, userId, meta = {}) => {
   logger.info(`[AUTH] ${action}`, { category: 'AUTHENTICATION', userId, ...meta });
 };
