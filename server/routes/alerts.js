@@ -9,21 +9,31 @@ import { sosRateLimiter } from '../middleware/rateLimiter.js';
 import { logAlert } from '../utils/logger.js';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
-import multer from 'multer';
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production');
+const AUDIO_DIR = IS_SERVERLESS
+  ? path.join(os.tmpdir(), 'uploads/audio')
+  : path.join(__dirname, '../uploads/audio');
 
-const AUDIO_DIR = path.join(__dirname, '../uploads/audio');
-if (!fs.existsSync(AUDIO_DIR)) {
-  fs.mkdirSync(AUDIO_DIR, { recursive: true });
-}
+const ensureAudioDir = () => {
+  try {
+    if (!fs.existsSync(AUDIO_DIR)) {
+      fs.mkdirSync(AUDIO_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[Audio Directory Warning]:', err.message);
+  }
+};
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    ensureAudioDir();
     cb(null, AUDIO_DIR);
   },
   filename: (req, file, cb) => {
