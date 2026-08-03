@@ -138,7 +138,12 @@ router.post('/login', authRateLimiter, validate(loginSchema), (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid email credentials or password.' });
     }
 
-    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    const passwordHashToCompare = user.passwordHash || user.password;
+    if (!passwordHashToCompare || typeof passwordHashToCompare !== 'string') {
+      return res.status(401).json({ success: false, error: 'Invalid email credentials or password.' });
+    }
+
+    const isMatch = bcrypt.compareSync(password, passwordHashToCompare);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Invalid email credentials or password.' });
     }
@@ -155,7 +160,7 @@ router.post('/login', authRateLimiter, validate(loginSchema), (req, res) => {
 
     logAuth('LOGIN_SUCCESS', user.id, { email: user.email });
 
-    const { passwordHash: _ph, ...userWithoutPassword } = user;
+    const { passwordHash: _ph, password: _p, ...userWithoutPassword } = user;
     return res.json({
       success: true,
       message: 'Signed in successfully',
