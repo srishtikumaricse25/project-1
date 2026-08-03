@@ -102,7 +102,12 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.some(o => origin.startsWith(o)) || origin.startsWith('http://localhost:')) {
+      if (
+        !origin ||
+        allowedOrigins.some(o => origin && origin.startsWith(o)) ||
+        (origin && origin.startsWith('http://localhost:')) ||
+        (origin && origin.endsWith('.vercel.app'))
+      ) {
         callback(null, true);
       } else {
         callback(new Error('CORS policy: Request from origin not allowed'));
@@ -224,12 +229,14 @@ app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  logger.info(`SILENT SOS HARDENED SECURITY SERVER RUNNING ON PORT ${PORT}`, {
-    category: 'SYSTEM',
-    port: PORT
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    logger.info(`SILENT SOS HARDENED SECURITY SERVER RUNNING ON PORT ${PORT}`, {
+      category: 'SYSTEM',
+      port: PORT
+    });
   });
-});
+}
 
 // Graceful Shutdown Handler for 24x7 High Availability
 const gracefulShutdown = (signal) => {

@@ -1,6 +1,15 @@
 import { EmergencyAlert, EmergencyContact, NotificationLog, User } from '../types';
 
-const API_BASE = '/api';
+const getApiBase = (): string => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
+    const cleaned = envUrl.trim().replace(/\/$/, '');
+    return cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`;
+  }
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 // Helper to get stored JWT token
 const getAuthHeaders = (): Record<string, string> => {
