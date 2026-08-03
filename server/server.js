@@ -210,6 +210,16 @@ app.get('/', (req, res) => {
 
 // Setup WebSocket logic
 setupTrackingSockets(io);
+
+// Catch-all 404 handler for unhandled API routes (ensures API always returns JSON, never HTML)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `API endpoint not found: ${req.method} ${req.originalUrl}`,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 

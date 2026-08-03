@@ -40,8 +40,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (loading) return;
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
       setError(t('enterEmailPasswordError'));
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -50,17 +59,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
       setError(null);
       
       // Determine if admin desk or regular user
-      const role = email.toLowerCase().includes('security') || email.toLowerCase().includes('admin') ? 'ADMIN' : 'USER';
-      const data: any = await api.login(email, role, password);
+      const role = trimmedEmail.toLowerCase().includes('security') || trimmedEmail.toLowerCase().includes('admin') ? 'ADMIN' : 'USER';
+      const data: any = await api.login(trimmedEmail, role, password);
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (!data.token || !data.user) {
+        throw new Error('Authentication succeeded but session token is missing.');
       }
       
       localStorage.setItem('sos-session-token', data.token);
       onAuthSuccess(data.user);
     } catch (err: any) {
-      console.error(err);
+      console.error('[Login Auth Error]:', err);
       setError(err.message || t('loginFailedError'));
     } finally {
       setLoading(false);
@@ -69,24 +78,56 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !phone || !password) {
+    if (loading) return;
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedPhone || !password) {
       setError(t('allFieldsRequiredError'));
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (trimmedPhone.length < 5) {
+      setError('Please enter a valid phone number.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      const data: any = await api.register({ name, email, phone, password });
+      const data: any = await api.register({
+        name: trimmedName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        password
+      });
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (!data.token || !data.user) {
+        throw new Error('Registration completed but session token is missing.');
       }
 
       localStorage.setItem('sos-session-token', data.token);
       onAuthSuccess(data.user);
     } catch (err: any) {
-      console.error(err);
+      console.error('[Sign-Up Auth Error]:', err);
       setError(err.message || t('registrationFailedError'));
     } finally {
       setLoading(false);

@@ -10,7 +10,7 @@ const createRateLimitMessage = (msg) => ({
 // 1. Auth Rate Limiter (Brute-force protection for login, register, reset-password)
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Max 10 requests per IP per window
+  max: 100, // Max 100 requests per IP per window
   message: createRateLimitMessage('Too many authentication attempts. Please try again after 15 minutes.'),
   standardHeaders: true,
   legacyHeaders: false

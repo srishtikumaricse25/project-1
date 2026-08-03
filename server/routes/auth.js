@@ -64,7 +64,7 @@ router.post('/register', authRateLimiter, validate(registerSchema), (req, res) =
   
   const existingUser = db.getUsers().find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
   if (existingUser) {
-    return res.status(400).json({ error: 'User with this email address already exists.' });
+    return res.status(400).json({ success: false, error: 'User with this email address already exists.' });
   }
 
   // Senior Security Spec: bcrypt password hashing with 12 salt rounds
@@ -74,9 +74,9 @@ router.post('/register', authRateLimiter, validate(registerSchema), (req, res) =
     id: `u-${Date.now()}`,
     organizationId: 'org-101',
     orgRole: 'USER',
-    name,
+    name: name.trim(),
     email: cleanEmail,
-    phone,
+    phone: phone.trim(),
     passwordHash,
     role: 'USER',
     isVerified: true,
@@ -98,7 +98,12 @@ router.post('/register', authRateLimiter, validate(registerSchema), (req, res) =
   });
 
   const { passwordHash: _ph, ...userWithoutPassword } = newUser;
-  return res.status(201).json({ user: userWithoutPassword, token: accessToken });
+  return res.status(201).json({
+    success: true,
+    message: 'Account created successfully',
+    user: userWithoutPassword,
+    token: accessToken
+  });
 });
 
 // 2. POST /api/auth/login
@@ -117,12 +122,12 @@ router.post('/login', authRateLimiter, validate(loginSchema), (req, res) => {
   }
 
   if (!user) {
-    return res.status(401).json({ error: 'Invalid email credentials or password.' });
+    return res.status(401).json({ success: false, error: 'Invalid email credentials or password.' });
   }
 
   const isMatch = bcrypt.compareSync(password, user.passwordHash);
   if (!isMatch) {
-    return res.status(401).json({ error: 'Invalid email credentials or password.' });
+    return res.status(401).json({ success: false, error: 'Invalid email credentials or password.' });
   }
 
   const { accessToken, refreshToken } = generateTokens(user);
@@ -136,7 +141,12 @@ router.post('/login', authRateLimiter, validate(loginSchema), (req, res) => {
   });
 
   const { passwordHash: _ph, ...userWithoutPassword } = user;
-  return res.json({ user: userWithoutPassword, token: accessToken });
+  return res.json({
+    success: true,
+    message: 'Signed in successfully',
+    user: userWithoutPassword,
+    token: accessToken
+  });
 });
 
 // 3. POST /api/auth/refresh (Refresh Token Rotation & Security Verification)

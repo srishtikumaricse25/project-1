@@ -33,30 +33,60 @@ const handleAuthResponse = async (res: Response): Promise<Response> => {
   return res;
 };
 
+// Helper for safe JSON parsing & structured error handling
+async function safeFetchJson<T = any>(url: string, options?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, options);
+  } catch (networkErr: any) {
+    throw new Error(networkErr.message || 'Server is temporarily unavailable. Please try again later.');
+  }
+
+  const contentType = res.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (contentType.includes('application/json')) {
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error('Requested authentication endpoint was not found. Please check backend server configuration.');
+      }
+      throw new Error(`Server returned error (${res.status}). Please check backend server logs.`);
+    }
+    throw new Error('Server returned an invalid response format.');
+  }
+
+  if (!res.ok) {
+    const errorMsg = data?.error || data?.message || `Request failed with status ${res.status}`;
+    throw new Error(errorMsg);
+  }
+
+  return data as T;
+}
+
 export const api = {
   // Auth
   async login(email: string, role: 'USER' | 'ADMIN', password: string): Promise<{ user: User; token: string }> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    return safeFetchJson<{ user: User; token: string }>(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ email, role, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
-    return data;
   },
 
   async register(payload: { name: string; email: string; phone: string; password: string }): Promise<{ user: User; token: string }> {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    return safeFetchJson<{ user: User; token: string }>(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Registration failed');
-    return data;
   },
 
   async getCurrentUser(): Promise<User> {
@@ -66,39 +96,41 @@ export const api = {
     });
     await handleAuthResponse(res);
     if (!res.ok) {
-      throw new Error('Failed to get current user');
+      throw new Error('Failed to get current user profile');
     }
-    return res.json();
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      return data.user || data;
+    }
+    throw new Error('Invalid user profile response format');
   },
 
   async logout(): Promise<void> {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    localStorage.removeItem('sos-session-token');
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } finally {
+      localStorage.removeItem('sos-session-token');
+    }
   },
 
   async forgotPassword(email: string): Promise<{ message: string; resetToken?: string }> {
-    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    return safeFetchJson<{ message: string; resetToken?: string }>(`${API_BASE}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to request password reset');
-    return data;
   },
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    return safeFetchJson<{ message: string }>(`${API_BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to reset password');
-    return data;
   },
 
   // Emergency Contacts
