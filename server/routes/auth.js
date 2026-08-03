@@ -86,9 +86,7 @@ router.post('/register', authRateLimiter, validate(registerSchema), (req, res) =
       stealthCode: '9999'
     };
 
-    if (!db.data) db.data = db.memoryData || {};
-    if (!db.data.users) db.data.users = [];
-    db.data.users.push(newUser);
+    db.createUser(newUser);
     db.save();
 
     const { accessToken, refreshToken } = generateTokens(newUser);

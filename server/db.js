@@ -231,10 +231,10 @@ class DatabaseEngine {
   }
 
   async connect() {
-    const mongoUri = process.env.MONGODB_URI;
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
     if (mongoUri && !mongoUri.includes('<user>')) {
       try {
-        await mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(mongoUri);
         logger.info('[DatabaseEngine] Connected to MongoDB Atlas/Production Database', { category: 'DATABASE' });
         await this.syncDatabaseState();
       } catch (err) {
@@ -352,6 +352,18 @@ class DatabaseEngine {
     if (!this.memoryData) this.memoryData = {};
     if (!this.memoryData.users) this.memoryData.users = [];
     return this.memoryData.users;
+  }
+
+  createUser(user) {
+    if (!this.memoryData) this.memoryData = {};
+    if (!this.memoryData.users) this.memoryData.users = [];
+    this.memoryData.users.push(user);
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      User.create(user).catch(err => {
+        logger.warn('[DatabaseEngine] Failed to persist user to MongoDB:', { error: err.message });
+      });
+    }
+    return user;
   }
 
   // Contacts (AES-256 Encrypted Field-level Storage)

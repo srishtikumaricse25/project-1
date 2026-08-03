@@ -99,6 +99,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
 
+if (process.env.CLIENT_URL) allowedOrigins.push(process.env.CLIENT_URL);
+if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -106,7 +109,10 @@ app.use(
         !origin ||
         allowedOrigins.some(o => origin && origin.startsWith(o)) ||
         (origin && origin.startsWith('http://localhost:')) ||
-        (origin && origin.endsWith('.vercel.app'))
+        (origin && origin.endsWith('.vercel.app')) ||
+        (origin && origin.endsWith('.onrender.com')) ||
+        (origin && origin.endsWith('.up.railway.app')) ||
+        (origin && origin.endsWith('.koyeb.app'))
       ) {
         callback(null, true);
       } else {
