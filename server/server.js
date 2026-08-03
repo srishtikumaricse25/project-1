@@ -147,19 +147,35 @@ app.use((req, res, next) => {
 // Attach io to app for use in routes
 app.set('io', io);
 
-// API Routes
+// API Routes (Mounted for both /api/* and /* for Vercel Serverless Function compatibility)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/contacts', contactsRoutes);
+app.use('/contacts', contactsRoutes);
+
 app.use('/api/alerts', alertsRoutes);
+app.use('/alerts', alertsRoutes);
+
 app.use('/api/analytics', analyticsRoutes);
+app.use('/analytics', analyticsRoutes);
+
 app.use('/api/organizations', organizationsRoutes);
+app.use('/organizations', organizationsRoutes);
+
 app.use('/api/devices', devicesRoutes);
+app.use('/devices', devicesRoutes);
+
 app.use('/api/push', pushRoutes);
+app.use('/push', pushRoutes);
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Direct top-level API Documentation aliases
 app.post('/api/register', (req, res) => res.redirect(307, '/api/auth/register'));
+app.post('/register', (req, res) => res.redirect(307, '/api/auth/register'));
 app.post('/api/login', (req, res) => res.redirect(307, '/api/auth/login'));
+app.post('/login', (req, res) => res.redirect(307, '/api/auth/login'));
 app.post('/api/sos', (req, res) => res.redirect(307, '/api/alerts/sos'));
 app.put('/api/location', (req, res) => res.redirect(307, '/api/alerts/location'));
 app.put('/api/resolve', (req, res) => res.redirect(307, '/api/alerts/resolve'));

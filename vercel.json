@@ -1,17 +1,37 @@
 {
   "version": 2,
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/index.js"
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     },
     {
-      "source": "/health",
-      "destination": "/api/index.js"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/[...path].js"
     },
     {
-      "source": "/ready",
-      "destination": "/api/index.js"
+      "src": "/health",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/ready",
+      "dest": "/api/index.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
