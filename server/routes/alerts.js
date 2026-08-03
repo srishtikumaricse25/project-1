@@ -16,31 +16,8 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production');
-const AUDIO_DIR = IS_SERVERLESS
-  ? path.join(os.tmpdir(), 'uploads/audio')
-  : path.join(__dirname, '../uploads/audio');
-
-const ensureAudioDir = () => {
-  try {
-    if (!fs.existsSync(AUDIO_DIR)) {
-      fs.mkdirSync(AUDIO_DIR, { recursive: true });
-    }
-  } catch (err) {
-    console.warn('[Audio Directory Warning]:', err.message);
-  }
-};
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    ensureAudioDir();
-    cb(null, AUDIO_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    cb(null, `audio-${req.params.id}-${uniqueSuffix}.webm`);
-  }
-});
+// Use memoryStorage to avoid disk file writes on serverless platforms (Vercel)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -195,18 +172,21 @@ router.post('/:id/audio', verifyToken, (req, res) => {
       return res.status(400).json({ error: 'No audio file uploaded. Send file under form-data key "audio".' });
     }
 
-    const fileUrl = `/uploads/audio/${req.file.filename}`;
+    const filename = `audio-${id}-${Date.now()}.webm`;
+    const mimeType = req.file.mimetype || 'audio/webm';
+    const base64Audio = req.file.buffer ? req.file.buffer.toString('base64') : '';
+    const fileUrl = base64Audio ? `data:${mimeType};base64,${base64Audio}` : `/uploads/audio/${filename}`;
     
     // Save metadata in database using Mongoose AudioRecording model
     const metadata = {
       id: `aud-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       alertId: id,
-      filename: req.file.filename,
+      filename,
       originalName: req.file.originalname || 'ambient-audio.webm',
-      mimeType: req.file.mimetype || 'audio/webm',
-      size: req.file.size,
+      mimeType,
+      size: req.file.size || (req.file.buffer ? req.file.buffer.length : 0),
       uploadedAt: new Date(),
-      filePath: req.file.path,
+      filePath: fileUrl,
       fileUrl
     };
 
